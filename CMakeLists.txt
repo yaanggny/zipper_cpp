@@ -13,6 +13,12 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+set(CMAKE_COLOR_DIAGNOSTICS ON)
+
+message(STATUS "CMAKE_INSTALL_PREFIX= ${CMAKE_INSTALL_PREFIX}")
+set(CMAKE_INSTALL_LIBDIR lib)
+set(CMAKE_INSTALL_INCLUDEDIR include)
+
 ##############################################################################
 # Build options for enabling/disabling demos and tests
 ##############################################################################
@@ -29,7 +35,7 @@ set(BUILD_SHARED_LIBS OFF)
 # Configure zlib-ng
 set(ZLIB_COMPAT ON CACHE BOOL "Enable zlib-ng compatibility")
 set(ZLIB_ENABLE_TESTS OFF CACHE BOOL "Disable zlib-ng tests")
-set(SKIP_INSTALL_ALL ON CACHE BOOL "Skip installation of zlib-ng")
+set(SKIP_INSTALL_ALL OFF)  # always installed by as dependency of zipper when ON or OFF
 add_subdirectory(external/zlib-ng)
 
 # Configure minizip with AES encryption support
@@ -112,7 +118,7 @@ target_include_directories(zipper PUBLIC
 # Library dependencies
 target_link_libraries(zipper PRIVATE
     minizip
-    zlibstatic
+    zlib
 )
 
 ##############################################################################
@@ -134,7 +140,7 @@ endif()
 ##############################################################################
 if(ZIPPER_BUILD_TESTS)
     message(STATUS "Building test applications")
-    add_subdirectory(tests)
+    add_subdirectory(tests EXCLUDE_FROM_ALL)
     enable_testing()
 endif()
 
@@ -154,14 +160,16 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 # Configure version information for shared libraries
+set(lib_deps aes minizip zlib)  # for static
 if(ZIPPER_SHARED_LIB)
     set_target_properties(zipper PROPERTIES
         VERSION ${PROJECT_VERSION}
         SOVERSION ${PROJECT_VERSION_MAJOR}
     )
+    set(lib_deps)
 endif()
 
-install(TARGETS zipper
+install(TARGETS ${lib_deps} zipper
     EXPORT zipperTargets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         NAMELINK_SKIP

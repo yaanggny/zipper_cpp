@@ -805,16 +805,32 @@ bool Zipper::add(const std::string& p_file_or_folder_path,
             if ((p_flags & Zipper::SaveHierarchy) == Zipper::SaveHierarchy)
             {
                 // Find the base folder path within the canonical file path
-                size_t base_pos =
-                    canonical_file_path.find(p_file_or_folder_path);
-                if (base_pos != std::string::npos)
+                if (file_path.rfind(p_file_or_folder_path) != std::size_t(0))
                 {
-                    name_in_zip = canonical_file_path.substr(base_pos);
+                    m_error_code = make_error_code(ZipperError::ADDING_ERROR,
+                                                   "Failed remove file parent path: '" +
+                                                       file_path + "'");
+                    overall_success = false;
+                    continue;
+                    // return false;
                 }
-                else
+                name_in_zip = file_path.substr(p_file_or_folder_path.length());
+                if (!name_in_zip.empty() && (name_in_zip[0] == '/' || name_in_zip[0] == '\\')) 
                 {
-                    name_in_zip = Path::fileName(file_path);
+                    name_in_zip.erase(0, 1);
                 }
+
+                // size_t base_pos =
+                //     canonical_file_path.rfind(p_file_or_folder_path);
+                // if (base_pos != std::string::npos)
+                // {
+                //     name_in_zip = canonical_file_path.substr(base_pos);
+                // }
+                // else
+                // {
+                //     name_in_zip = Path::fileName(file_path);
+                // }
+                // printf("name_in_zip: %s   filename: %s   fdpath=%s\n", name_in_zip.c_str(), file_path.c_str(), p_file_or_folder_path.c_str());
             }
             else
             {
